@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Caffeine Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #E6EFEA;
+  --panel: #F4F8F5;
+  --ink: #14332A;
+  --muted: #587068;
+  --grid: #C4D6CC;
+  --amber: #D9920F;
+  --amber-soft: rgba(217,146,15,0.18);
+  --danger: #A33A2A;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0F221C;
+    --panel: #163029;
+    --ink: #E3EEE8;
+    --muted: #93ADA3;
+    --grid: #2A4A40;
+    --amber: #F0AE33;
+    --amber-soft: rgba(240,174,51,0.2);
+    --danger: #E07A68;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0F221C;
+  --panel: #163029;
+  --ink: #E3EEE8;
+  --muted: #93ADA3;
+  --grid: #2A4A40;
+  --amber: #F0AE33;
+  --amber-soft: rgba(240,174,51,0.2);
+  --danger: #E07A68;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+h1 {
+  font-size: clamp(2rem, 6vw, 3rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem;
+}
+.lede { color: var(--muted); margin: 0 0 1.75rem; max-width: 34rem; }
+
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2.5rem;
+  align-items: baseline;
+  margin-bottom: 0.75rem;
+}
+.now-value {
+  font-size: clamp(3rem, 12vw, 5rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.now-value small { font-size: 0.35em; font-weight: 600; letter-spacing: 0; margin-left: 0.2em; }
+.readout p { margin: 0; color: var(--muted); }
+.readout strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.chart-wrap {
+  overflow-x: auto;
+  margin: 0 -0.25rem 2rem;
+}
+svg { display: block; width: 100%; height: auto; min-width: 32rem; }
+
+section { margin-bottom: 2rem; }
+h2 { font-size: 1.25rem; font-weight: 600; margin: 0 0 0.75rem; }
+
+.presets { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+.preset {
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.45rem 0.85rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.preset:hover { background: var(--amber-soft); }
+.preset span { color: var(--muted); margin-left: 0.3em; }
+
+.form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
+label { display: flex; flex-direction: column; font-size: 0.9rem; color: var(--muted); gap: 0.25rem; }
+input {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1.5px solid var(--grid);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  width: 9rem;
+}
+input:focus-visible, button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.add {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+}
+.error { color: var(--danger); font-size: 0.9rem; margin: 0.5rem 0 0; min-height: 1.35em; }
+
+ul { list-style: none; margin: 0; padding: 0; }
+li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--grid);
+  font-variant-numeric: tabular-nums;
+}
+li .left { color: var(--muted); }
+li .left strong { color: var(--ink); margin-right: 0.5rem; }
+.remove {
+  font: inherit;
+  font-size: 0.9rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.empty { color: var(--muted); }
+.settings { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
+.clear {
+  font: inherit;
+  font-size: 0.95rem;
+  background: none;
+  border: 1.5px solid var(--grid);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+.note { color: var(--muted); font-size: 0.9rem; margin-top: 2.5rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Caffeine in your system</h1>
+  <p class="lede">Log what you drink and see how much is left right now and at bedtime, using caffeine's roughly 6-hour half-life.</p>
+
+  <div class="readout">
+    <div class="now-value" id="nowValue">0<small>mg now</small></div>
+    <div>
+      <p>At bedtime (<span id="bedLabel">11:00 PM</span>): <strong id="bedValue">0 mg</strong></p>
+      <p>Below 25 mg: <strong id="clearTime">—</strong></p>
+    </div>
+  </div>
+
+  <div class="chart-wrap"><svg id="chart" viewBox="0 0 640 240" role="img" aria-label="Caffeine level over time"></svg></div>
+
+  <section>
+    <h2>Add a drink</h2>
+    <div class="presets" id="presets"></div>
+    <div class="form">
+      <label>Amount (mg)<input id="amount" type="number" min="1" step="1" inputmode="numeric" placeholder="95"></label>
+      <label>Time<input id="time" type="time"></label>
+      <button class="add" id="addBtn">Add drink</button>
+    </div>
+    <p class="error" id="error" role="alert"></p>
+  </section>
+
+  <section>
+    <h2>Today's drinks</h2>
+    <ul id="list"></ul>
+  </section>
+
+  <section>
+    <h2>Settings</h2>
+    <div class="settings">
+      <label>Bedtime<input id="bedtime" type="time" value="23:00"></label>
+      <button class="clear" id="clearBtn">Clear all drinks</button>
+    </div>
+  </section>
+
+  <p class="note">Estimates only. Half-life varies from person to person (roughly 3 to 7 hours) and can be affected by things like pregnancy, some medications, and smoking.</p>
+</main>
+
+<script>
+const HALF_LIFE_H = 6;
+const HOUR = 3600 * 1000;
+const PRESETS = [
+  ["Drip coffee", 95], ["Espresso shot", 63], ["Energy drink", 160],
+  ["Cold brew", 200], ["Black tea", 47], ["Cola", 34]
+];
+
+let doses = [];
+let bedtime = "23:00";
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem("caffeine-doses") || "[]");
+    if (Array.isArray(d)) doses = d.filter(x => typeof x.mg === "number" && typeof x.t === "number");
+    const b = localStorage.getItem("caffeine-bedtime");
+    if (b) bedtime = b;
+  } catch (e) { doses = []; }
+  const cutoff = Date.now() - 48 * HOUR;
+  doses = doses.filter(d => d.t > cutoff);
+}
+function save() {
+  try {
+    localStorage.setItem("caffeine-doses", JSON.stringify(doses));
+    localStorage.setItem("caffeine-bedtime", bedtime);
+  } catch (e) {}
+}
+
+function levelAt(t) {
+  let total = 0;
+  for (const d of doses) {
+    if (t >= d.t) total += d.mg * Math.pow(0.5, (t - d.t) / (HALF_LIFE_H * HOUR));
+  }
+  return total;
+}
+
+function fmtTime(t) {
+  return new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+function hhmm(date) {
+  return String(date.getHours()).padStart(2, "0") + ":" + String(date.getMinutes()).padStart(2, "0");
+}
+function timeToday(str) {
+  const [h, m] = str.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d.getTime();
+}
+function nextBedtime() {
+  let t = timeToday(bedtime);
+  if (t < Date.now()) t += 24 * HOUR;
+  return t;
+}
+
+function render() {
+  const now = Date.now();
+  const nowMg = levelAt(now);
+  document.getElementById("nowValue").innerHTML = Math.round(nowMg) + "<small>mg now</small>";
+
+  const bed = nextBedtime();
+  document.getElementById("bedLabel").textContent = fmtTime(bed);
+  document.getElementById("bedValue").textContent = Math.round(levelAt(bed)) + " mg";
+
+  let clear = "now";
+  if (nowMg >= 25) {
+    let t = now;
+    while (levelAt(t) >= 25 && t < now + 72 * HOUR) t += 5 * 60 * 1000;
+    clear = fmtTime(t);
+  }
+  document.getElementById("clearTime").textContent = clear;
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  if (doses.length === 0) {
+    list.innerHTML = '<li class="empty">No drinks logged yet. Tap a drink above to add one.</li>';
+  } else {
+    [...doses].sort((a, b) => b.t - a.t).forEach(d => {
+      const li = document.createElement("li");
+      const left = document.createElement("span");
+      left.className = "left";
+      left.innerHTML = "<strong>" + d.mg + " mg</strong>" + fmtTime(d.t) + (d.name ? ", " + d.name : "");
+      const btn = document.createElement("button");
+      btn.className = "remove";
+      btn.textContent = "Remove";
+      btn.onclick = () => { doses = doses.filter(x => x !== d); save(); render(); };
+      li.append(left, btn);
+      list.append(li);
+    });
+  }
+  drawChart(now, bed);
+}
+
+function drawChart(now, bed) {
+  const svg = document.getElementById("chart");
+  const W = 640, H = 240, L = 44, R = 12, T = 16, B = 30;
+  const start = doses.length ? Math.min(now - 2 * HOUR, ...doses.map(d => d.t)) : now - 2 * HOUR;
+  const end = Math.max(now + 12 * HOUR, bed + HOUR);
+  let peak = 0;
+  const pts = [];
+  const steps = 160;
+  for (let i = 0; i <= steps; i++) {
+    const t = start + (end - start) * i / steps;
+    const v = levelAt(t);
+    peak = Math.max(peak, v);
+    pts.push([t, v]);
+  }
+  const yMax = Math.max(100, Math.ceil(peak / 50) * 50);
+  const x = t => L + (t - start) / (end - start) * (W - L - R);
+  const y = v => T + (1 - v / yMax) * (H - T - B);
+
+  let s = "";
+  for (let g = 0; g <= yMax; g += yMax / 4) {
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(g)}" y2="${y(g)}" stroke="var(--grid)" stroke-width="1"/>`;
+    s += `<text x="${L - 8}" y="${y(g) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${Math.round(g)}</text>`;
+  }
+  const first = new Date(start); first.setMinutes(0, 0, 0);
+  for (let t = first.getTime() + HOUR; t < end; t += HOUR) {
+    const hr = new Date(t).getHours();
+    if (hr % 3 === 0) {
+      const label = new Date(t).toLocaleTimeString([], { hour: "numeric" });
+      s += `<text x="${x(t)}" y="${H - 8}" text-anchor="middle" font-size="11" fill="var(--muted)">${label}</text>`;
+    }
+  }
+  const line = pts.map((p, i) => (i ? "L" : "M") + x(p[0]).toFixed(1) + " " + y(p[1]).toFixed(1)).join(" ");
+  const area = line + ` L ${x(end)} ${y(0)} L ${x(start)} ${y(0)} Z`;
+  s += `<path d="${area}" fill="var(--amber-soft)"/>`;
+  s += `<path d="${line}" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linejoin="round"/>`;
+
+  s += `<line x1="${x(bed)}" x2="${x(bed)}" y1="${T}" y2="${H - B}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+  s += `<text x="${x(bed) - 6}" y="${T + 12}" text-anchor="end" font-size="11" fill="var(--muted)">Bedtime</text>`;
+
+  s += `<line x1="${x(now)}" x2="${x(now)}" y1="${T}" y2="${H - B}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  s += `<circle cx="${x(now)}" cy="${y(levelAt(now))}" r="5" fill="var(--ink)"/>`;
+  s += `<text x="${x(now) + 6}" y="${T + 12}" font-size="11" fill="var(--ink)">Now</text>`;
+  svg.innerHTML = s;
+}
+
+function showError(msg) { document.getElementById("error").textContent = msg; }
+
+function addDose(mg, name) {
+  const tStr = document.getElementById("time").value;
+  if (!tStr) { showError("Choose a time for the drink."); return; }
+  if (!(mg > 0) || mg > 2000) { showError("Enter an amount between 1 and 2000 mg."); return; }
+  showError("");
+  doses.push({ mg: Math.round(mg), t: timeToday(tStr), name: name || "" });
+  save();
+  render();
+}
+
+document.getElementById("presets").innerHTML = PRESETS.map(([n, mg]) =>
+  `<button class="preset" data-mg="${mg}" data-name="${n}">${n}<span>${mg} mg</span></button>`).join("");
+document.getElementById("presets").addEventListener("click", e => {
+  const b = e.target.closest(".preset");
+  if (b) addDose(Number(b.dataset.mg), b.dataset.name);
+});
+document.getElementById("addBtn").onclick = () => {
+  addDose(Number(document.getElementById("amount").value), "");
+  document.getElementById("amount").value = "";
+};
+document.getElementById("bedtime").addEventListener("change", e => {
+  if (e.target.value) { bedtime = e.target.value; save(); render(); }
+});
+document.getElementById("clearBtn").onclick = () => {
+  if (confirm("Remove all logged drinks?")) { doses = []; save(); render(); }
+};
+
+load();
+document.getElementById("bedtime").value = bedtime;
+document.getElementById("time").value = hhmm(new Date());
+render();
+setInterval(() => {
+  render();
+}, 60 * 1000);
+</script>
+</body>
+</html>
